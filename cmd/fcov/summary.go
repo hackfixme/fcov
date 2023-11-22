@@ -120,7 +120,7 @@ func (s *Summary) Run() error {
 			ok     bool
 		)
 		if render, ok = renders[out.Format]; !ok {
-			render = sum.Render(out.Format, s.GroupFiles, excludeOut)
+			render = sum.Render(out.Format, s.GroupFiles, excludeOut, s.Thresholds.Lower, s.Thresholds.Upper)
 			renders[out.Format] = render
 		}
 

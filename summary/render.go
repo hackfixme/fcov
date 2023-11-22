@@ -19,10 +19,22 @@ const (
 )
 
 // Render the summary as a string in the provided format.
-func (s *Summary) Render(ft Format, groupFiles bool, exclude *gitignore.GitIgnore) string {
+func (s *Summary) Render(
+	ft Format, groupFiles bool, exclude *gitignore.GitIgnore,
+	lowerThreshold, upperThreshold float64,
+) string {
+	out := []string{}
+
 	if len(s.Packages) == 0 {
 		return ""
 	}
+
+	if ft == Markdown {
+		out = append(out, fmt.Sprintf("![Total Coverage](%s)",
+			generateBadgeURL(s.Coverage*100, lowerThreshold, upperThreshold)))
+		out = append(out, "")
+	}
+
 	pkgNames := make([]string, 0, len(s.Packages))
 	for pkgName := range s.Packages {
 		if exclude.MatchesPath(pkgName) {
@@ -32,7 +44,6 @@ func (s *Summary) Render(ft Format, groupFiles bool, exclude *gitignore.GitIgnor
 	}
 	sort.Strings(pkgNames)
 
-	out := []string{}
 	for _, pkgName := range pkgNames {
 		pkgSum := s.Packages[pkgName]
 		out = append(out, pkgSum.Render(ft))
@@ -54,6 +65,10 @@ func (s *Summary) Render(ft Format, groupFiles bool, exclude *gitignore.GitIgnor
 			}
 			out = append(out, file.Render(ft, groupFiles))
 		}
+	}
+
+	if ft == Text {
+		out = append(out, "", fmt.Sprintf("Total Coverage: %.2f%%", s.Coverage*100))
 	}
 
 	return strings.Join(out, "\n")
@@ -96,4 +111,15 @@ func FormatFromString(s string) Format {
 	default:
 		return ""
 	}
+}
+
+func generateBadgeURL(cov float64, lowerThreshold, upperThreshold float64) string {
+	color := "success"
+	if cov < lowerThreshold {
+		color = "critical"
+	} else if cov < upperThreshold {
+		color = "yellow"
+	}
+
+	return fmt.Sprintf("https://img.shields.io/badge/Total%%20Coverage-%.2f%%25-%s?style=flat", cov, color)
 }
