@@ -15,7 +15,7 @@ import (
 
 // Summary is the fcov summary command.
 type Summary struct {
-	Files      []string     `arg:"name='filepath',required,min=1,help='One or more coverage files.'" type:"existingfile"`
+	Files      []string     `arg:"" help:"One or more coverage files." type:"existingfile"`
 	GroupFiles bool         `help:"Group files under packages when rendering to text or Markdown. " default:"true" negatable:""`
 	Output     OutputOption `short:"o" help:"Write the summary to stdout or a file. More than one value can be provided, separated by comma.\nValues can be either formats ('md' or 'txt'), or filenames whose formats will be inferred by their extension.\n Example: 'txt,summary.md' would write the summary in text format to stdout, and to a summary.md file in Markdown format. " default:"txt"`
 }
