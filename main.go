@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"sort"
 	"strings"
 )
 
@@ -45,31 +44,6 @@ func main() {
 		log.Fatal(err)
 	}
 
-	fnames := make([]string, 0, len(coverage))
-	for fn := range coverage {
-		fnames = append(fnames, fn)
-	}
-	sort.Strings(fnames)
-
-	for _, fn := range fnames {
-		var (
-			numStatements int
-			hitCount      int
-			fileCoverage  float64
-			f             = coverage[fn]
-		)
-		for _, cov := range f {
-			numStatements += cov.numStatements
-			if cov.hitCount > 0 {
-				hitCount += cov.numStatements
-			}
-			// covered += cov.covered
-		}
-
-		if numStatements > 0 {
-			fileCoverage = float64(hitCount) / float64(numStatements)
-		}
-
-		fmt.Printf("%s %f\n", fn, fileCoverage)
-	}
+	sum := createSummary(coverage)
+	fmt.Println(sum.Render(markdown))
 }
