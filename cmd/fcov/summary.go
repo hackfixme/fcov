@@ -17,10 +17,11 @@ import (
 
 // Summary is the fcov summary command.
 type Summary struct {
-	Files      []string     `arg:"" help:"One or more coverage files." type:"existingfile"`
-	Exclude    []string     `help:"Glob patterns applied on file paths to exclude files from the coverage calculation and output. " placeholder:"<glob pattern>"`
-	GroupFiles bool         `help:"Group files under packages when rendering to text or Markdown. " default:"true" negatable:""`
-	Output     OutputOption `short:"o" help:"Write the summary to stdout or a file. More than one value can be provided, separated by comma.\nValues can be either formats ('md' or 'txt'), or filenames whose formats will be inferred by their extension.\n Example: 'txt,summary.md' would write the summary in text format to stdout, and to a summary.md file in Markdown format. " default:"txt"`
+	Files         []string     `arg:"" help:"One or more coverage files." type:"existingfile"`
+	Exclude       []string     `help:"Glob patterns applied on file paths to exclude files from the coverage calculation and output. " placeholder:"<glob pattern>"`
+	ExcludeOutput []string     `help:"Glob patterns applied on file paths to exclude files from the output, but *not* from the coverage calculation. " placeholder:"<glob pattern>"`
+	GroupFiles    bool         `help:"Group files under packages when rendering to text or Markdown. " default:"true" negatable:""`
+	Output        OutputOption `short:"o" help:"Write the summary to stdout or a file. More than one value can be provided, separated by comma.\nValues can be either formats ('md' or 'txt'), or filenames whose formats will be inferred by their extension.\n Example: 'txt,summary.md' would write the summary in text format to stdout, and to a summary.md file in Markdown format. " default:"txt"`
 }
 
 // Output is a destination the summary should be written to. If Filename is
@@ -68,6 +69,7 @@ func (o *OutputOption) UnmarshalText(text []byte) error {
 func (s *Summary) Run() error {
 	cov := lib.NewCoverage()
 	excludeCov := gitignore.CompileIgnoreLines(s.Exclude...)
+	excludeOut := gitignore.CompileIgnoreLines(s.ExcludeOutput...)
 
 	for _, fpath := range s.Files {
 		file, err := os.Open(fpath)
@@ -90,7 +92,7 @@ func (s *Summary) Run() error {
 			ok     bool
 		)
 		if render, ok = renders[out.Format]; !ok {
-			render = sum.Render(out.Format, s.GroupFiles)
+			render = sum.Render(out.Format, s.GroupFiles, excludeOut)
 			renders[out.Format] = render
 		}
 

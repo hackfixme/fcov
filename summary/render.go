@@ -5,6 +5,8 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+
+	gitignore "github.com/sabhiram/go-gitignore"
 )
 
 // Format is the type of format a summary can be rendered in.
@@ -17,12 +19,15 @@ const (
 )
 
 // Render the summary as a string in the provided format.
-func (s *Summary) Render(f Format, groupFiles bool) string {
+func (s *Summary) Render(ft Format, groupFiles bool, exclude *gitignore.GitIgnore) string {
 	if len(s.Packages) == 0 {
 		return ""
 	}
 	pkgNames := make([]string, 0, len(s.Packages))
 	for pkgName := range s.Packages {
+		if exclude.MatchesPath(pkgName) {
+			continue
+		}
 		pkgNames = append(pkgNames, pkgName)
 	}
 	sort.Strings(pkgNames)
@@ -30,7 +35,7 @@ func (s *Summary) Render(f Format, groupFiles bool) string {
 	out := []string{}
 	for _, pkgName := range pkgNames {
 		pkgSum := s.Packages[pkgName]
-		out = append(out, pkgSum.Render(f))
+		out = append(out, pkgSum.Render(ft))
 
 		if len(pkgSum.Files) == 0 {
 			continue
@@ -43,7 +48,11 @@ func (s *Summary) Render(f Format, groupFiles bool) string {
 		sort.Strings(fnames)
 
 		for _, fname := range fnames {
-			out = append(out, pkgSum.Files[fname].Render(f, groupFiles))
+			file := pkgSum.Files[fname]
+			if exclude.MatchesPath(file.AbsPath()) {
+				continue
+			}
+			out = append(out, file.Render(ft, groupFiles))
 		}
 	}
 

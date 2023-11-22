@@ -20,6 +20,11 @@ type File struct {
 	Package string
 }
 
+// AbsPath returns the absolute path of the file.
+func (f File) AbsPath() string {
+	return path.Join(f.Package, f.Name)
+}
+
 // Summary holds global coverage information.
 type Summary struct {
 	lib.Stats
