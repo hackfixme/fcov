@@ -11,7 +11,8 @@ import (
 
 // Summary is the fcov summary command.
 type Summary struct {
-	Files []string `arg:"name='filepath',required,min=1,help='One or more coverage files.'"`
+	Files      []string `arg:"name='filepath',required,min=1,help='One or more coverage files.'"`
+	GroupFiles bool     `help:"Group files under packages when rendering to text or Markdown." default:"true" negatable:""`
 }
 
 // Run the fcov summary command.
@@ -31,7 +32,7 @@ func (s *Summary) Run() error {
 	}
 
 	sum := summary.Create(cov)
-	fmt.Println(sum.Render(summary.Markdown))
+	fmt.Println(sum.Render(summary.Markdown, s.GroupFiles))
 
 	return nil
 }

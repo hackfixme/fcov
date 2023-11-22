@@ -17,7 +17,7 @@ const (
 )
 
 // Render the summary as a string in the provided format.
-func (s *Summary) Render(f Format) string {
+func (s *Summary) Render(f Format, groupFiles bool) string {
 	if len(s.Packages) == 0 {
 		return ""
 	}
@@ -43,7 +43,7 @@ func (s *Summary) Render(f Format) string {
 		sort.Strings(fnames)
 
 		for _, fname := range fnames {
-			out = append(out, pkgSum.Files[fname].Render(f))
+			out = append(out, pkgSum.Files[fname].Render(f, groupFiles))
 		}
 	}
 
@@ -62,12 +62,17 @@ func (p *Package) Render(ft Format) string {
 }
 
 // Render the file summary as a string in the provided format.
-func (f *File) Render(ft Format) string {
+func (f *File) Render(ft Format, group bool) string {
 	cov := strconv.FormatFloat(f.Coverage*100, 'f', 2, 64)
+
+	prefix := "- "
+	if !group {
+		prefix = fmt.Sprintf("%s/", f.Package)
+	}
 	switch ft {
 	case Markdown:
-		return fmt.Sprintf("- %s | %s%%", f.Name, cov)
+		return fmt.Sprintf("%s%s | %s%%", prefix, f.Name, cov)
 	default:
-		return fmt.Sprintf("- %s\t%s%%", f.Name, cov)
+		return fmt.Sprintf("%s%s\t%s%%", prefix, f.Name, cov)
 	}
 }

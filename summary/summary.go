@@ -16,7 +16,8 @@ type Package struct {
 // File holds coverage information related to a file.
 type File struct {
 	lib.Stats
-	Name string
+	Name    string
+	Package string
 }
 
 // Summary holds global coverage information.
@@ -62,7 +63,7 @@ func Create(cov *lib.Coverage) *Summary {
 			if len(sum.Packages[pkg].Files) == 0 {
 				sum.Packages[pkg].Files = make(map[string]*File)
 			}
-			fileSum = &File{Name: path.Base(filename)}
+			fileSum = &File{Name: path.Base(filename), Package: pkg}
 			sum.Packages[pkg].Files[fileSum.Name] = fileSum
 		}
 
