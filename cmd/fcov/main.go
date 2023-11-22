@@ -15,6 +15,10 @@ func main() {
 		kong.Name("fcov"),
 		kong.UsageOnError(),
 		kong.DefaultEnvars("FCOV"),
+		kong.ConfigureHelp(kong.HelpOptions{
+			Compact: true,
+			Summary: true,
+		}),
 	)
 	ctx.FatalIfErrorf(ctx.Run())
 }

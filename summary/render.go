@@ -8,12 +8,12 @@ import (
 )
 
 // Format is the type of format a summary can be rendered in.
-type Format int
+type Format string
 
 // Supported format types.
 const (
-	Text Format = iota + 1
-	Markdown
+	Text     Format = "txt"
+	Markdown Format = "md"
 )
 
 // Render the summary as a string in the provided format.
@@ -74,5 +74,17 @@ func (f *File) Render(ft Format, group bool) string {
 		return fmt.Sprintf("%s%s | %s%%", prefix, f.Name, cov)
 	default:
 		return fmt.Sprintf("%s%s\t%s%%", prefix, f.Name, cov)
+	}
+}
+
+// FormatFromString parses s into a valid Format value.
+func FormatFromString(s string) Format {
+	switch Format(s) {
+	case Markdown:
+		return Markdown
+	case Text:
+		return Text
+	default:
+		return ""
 	}
 }
