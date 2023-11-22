@@ -1,13 +1,13 @@
 package main
 
 import (
+	"encoding"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
 
-	"github.com/alecthomas/kong"
 	"github.com/friendlycaptcha/fcov/lib"
 	"github.com/friendlycaptcha/fcov/parse"
 	"github.com/friendlycaptcha/fcov/summary"
@@ -30,33 +30,12 @@ type Output struct {
 // OutputOption is a custom type that parses the output option.
 type OutputOption []Output
 
-var _ kong.MapperValue = &OutputOption{}
+var _ encoding.TextUnmarshaler = &OutputOption{}
 
-// Decode implements the kong.MapperValue interface.
-func (o *OutputOption) Decode(ctx *kong.DecodeContext) error {
-	value, err := ctx.Scan.PopValue("output")
-	if err != nil {
-		return err
-	}
-
-	outputs, err := parseOutput(value.String())
-	if err != nil {
-		return err
-	}
-
-	*o = outputs
-
-	return nil
-}
-
-// String implements the fmt.Stringer interface.
-func (o *OutputOption) String() string {
-	return fmt.Sprintf("%v", *o)
-}
-
-func parseOutput(s string) ([]Output, error) {
-	outputs := make([]Output, 0)
-	options := strings.Split(s, ",")
+// UnmarshalText implements the encoding.TextUnmarshaler interface for
+// OutputOption.
+func (o *OutputOption) UnmarshalText(text []byte) error {
+	options := strings.Split(string(text), ",")
 
 	for _, option := range options {
 		out := Output{}
@@ -65,21 +44,21 @@ func parseOutput(s string) ([]Output, error) {
 			// Assume it's a filename, and infer the format from the extension.
 			ext := filepath.Ext(option)
 			if ext == "" {
-				return nil, fmt.Errorf("invalid output value: %s", option)
+				return fmt.Errorf("invalid output value: %s", option)
 			}
 			format = summary.FormatFromString(ext[1:]) // Remove the leading dot
 			if format == "" {
-				return nil, fmt.Errorf("invalid output format: %s", ext[1:])
+				return fmt.Errorf("invalid output format: %s", ext[1:])
 			}
 			out.Filename = option
 		}
 
 		out.Format = format
 
-		outputs = append(outputs, out)
+		*o = append(*o, out)
 	}
 
-	return outputs, nil
+	return nil
 }
 
 // Run the fcov summary command.
