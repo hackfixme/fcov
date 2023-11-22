@@ -1,28 +1,20 @@
 package main
 
 import (
-	"fmt"
-	"log"
-	"os"
-
-	"github.com/friendlycaptcha/fcov/lib"
-	"github.com/friendlycaptcha/fcov/parse"
-	"github.com/friendlycaptcha/fcov/summary"
+	"github.com/alecthomas/kong"
 )
 
+// CLI is the command line interface of fcov.
+type CLI struct {
+	Summary Summary `kong:"cmd,help='Generate a coverage summary.'"`
+}
+
 func main() {
-	file, err := os.Open(os.Args[1])
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer file.Close()
-
-	cov := lib.NewCoverage()
-
-	if err = parse.Go(file, cov); err != nil {
-		log.Fatal(err)
-	}
-
-	sum := summary.Create(cov)
-	fmt.Println(sum.Render(summary.Markdown))
+	var cli CLI
+	ctx := kong.Parse(&cli,
+		kong.Name("fcov"),
+		kong.UsageOnError(),
+		kong.DefaultEnvars("FCOV"),
+	)
+	ctx.FatalIfErrorf(ctx.Run())
 }
