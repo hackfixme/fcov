@@ -6,6 +6,8 @@ import (
 	"io"
 	"strings"
 
+	gitignore "github.com/sabhiram/go-gitignore"
+
 	"github.com/friendlycaptcha/fcov/lib"
 )
 
@@ -16,7 +18,7 @@ type parsedGoLine struct {
 }
 
 // Go parses a Go coverage file into the provided coverage.
-func Go(r io.Reader, cov *lib.Coverage) error {
+func Go(r io.Reader, cov *lib.Coverage, exclude *gitignore.GitIgnore) error {
 	scanner := bufio.NewScanner(r)
 
 	for scanner.Scan() {
@@ -27,7 +29,11 @@ func Go(r io.Reader, cov *lib.Coverage) error {
 		}
 		p, err := parseGoLine(line)
 		if err != nil {
-			return fmt.Errorf("failed parsing line '%s': %v", line, err)
+			return fmt.Errorf("failed parsing line '%s': %w", line, err)
+		}
+
+		if exclude.MatchesPath(p.filename) {
+			continue
 		}
 
 		if _, ok := cov.Files[p.filename]; !ok {
