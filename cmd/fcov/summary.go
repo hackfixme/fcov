@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	gitignore "github.com/sabhiram/go-gitignore"
@@ -17,11 +18,12 @@ import (
 
 // Summary is the fcov summary command.
 type Summary struct {
-	Files         []string     `arg:"" help:"One or more coverage files." type:"existingfile"`
-	Exclude       []string     `help:"Glob patterns applied on file paths to exclude files from the coverage calculation and output. " placeholder:"<glob pattern>"`
-	ExcludeOutput []string     `help:"Glob patterns applied on file paths to exclude files from the output, but *not* from the coverage calculation. " placeholder:"<glob pattern>"`
-	GroupFiles    bool         `help:"Group files under packages when rendering to text or Markdown. " default:"true" negatable:""`
-	Output        OutputOption `short:"o" help:"Write the summary to stdout or a file. More than one value can be provided, separated by comma.\nValues can be either formats ('md' or 'txt'), or filenames whose formats will be inferred by their extension.\n Example: 'txt,summary.md' would write the summary in text format to stdout, and to a summary.md file in Markdown format. " default:"txt"`
+	Files         []string         `arg:"" help:"One or more coverage files." type:"existingfile"`
+	Exclude       []string         `help:"Glob patterns applied on file paths to exclude files from the coverage calculation and output. " placeholder:"<glob pattern>"`
+	ExcludeOutput []string         `help:"Glob patterns applied on file paths to exclude files from the output, but *not* from the coverage calculation. " placeholder:"<glob pattern>"`
+	GroupFiles    bool             `help:"Group files under packages when rendering to text or Markdown. " default:"true" negatable:""`
+	Output        OutputOption     `short:"o" help:"Write the summary to stdout or a file. More than one value can be provided, separated by comma.\nValues can be either formats ('md' or 'txt'), or filenames whose formats will be inferred by their extension.\n Example: 'txt,summary.md' would write the summary in text format to stdout, and to a summary.md file in Markdown format. " default:"txt"`
+	Thresholds    ThresholdsOption `help:"Lower and upper threshold percentages for badge and health indicators. " default:"50,75"`
 }
 
 // Output is a destination the summary should be written to. If Filename is
@@ -60,6 +62,32 @@ func (o *OutputOption) UnmarshalText(text []byte) error {
 		out.Format = format
 
 		*o = append(*o, out)
+	}
+
+	return nil
+}
+
+// ThresholdsOption is a custom type that parses the thresholds option.
+type ThresholdsOption struct {
+	Lower, Upper float64
+}
+
+var _ encoding.TextUnmarshaler = &ThresholdsOption{}
+
+// UnmarshalText implements the encoding.TextUnmarshaler interface for
+// ThresholdsOption.
+func (o *ThresholdsOption) UnmarshalText(text []byte) error {
+	parts := strings.Split(string(text), ",")
+	if len(parts) != 2 {
+		return fmt.Errorf("invalid thresholds value: %s", text)
+	}
+
+	var err error
+	if o.Lower, err = strconv.ParseFloat(parts[0], 64); err != nil {
+		return fmt.Errorf("invalid lower threshold '%s': %w", parts[0], err)
+	}
+	if o.Upper, err = strconv.ParseFloat(parts[1], 64); err != nil {
+		return fmt.Errorf("invalid upper threshold '%s': %w", parts[1], err)
 	}
 
 	return nil
