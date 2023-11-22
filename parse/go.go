@@ -15,6 +15,7 @@ type parsedGoLine struct {
 	stats    lib.Stats
 }
 
+// Go parses a Go coverage file into the provided coverage.
 func Go(r io.Reader, cov *lib.Coverage) error {
 	scanner := bufio.NewScanner(r)
 

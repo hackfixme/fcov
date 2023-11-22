@@ -6,22 +6,26 @@ import (
 	"github.com/friendlycaptcha/fcov/lib"
 )
 
+// Package holds coverage information related to a package.
 type Package struct {
 	lib.Stats
 	Name  string
 	Files map[string]*File
 }
 
+// File holds coverage information related to a file.
 type File struct {
 	lib.Stats
 	Name string
 }
 
+// Summary holds global coverage information.
 type Summary struct {
 	lib.Stats
 	Packages map[string]*Package
 }
 
+// Create a new summary based on the provided coverage.
 func Create(cov *lib.Coverage) *Summary {
 	sum := &Summary{}
 
