@@ -80,6 +80,8 @@ func Create(cov *lib.Coverage) *Summary {
 	}
 
 	for _, pkgSum := range sum.Packages {
+		sum.NumStatements += pkgSum.NumStatements
+		sum.HitCount += pkgSum.HitCount
 		if pkgSum.NumStatements > 0 {
 			pkgSum.Coverage = float64(pkgSum.HitCount) / float64(pkgSum.NumStatements)
 		}
