@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/olekukonko/tablewriter"
 	gitignore "github.com/sabhiram/go-gitignore"
 )
 
@@ -23,16 +24,19 @@ func (s *Summary) Render(
 	ft Format, groupFiles bool, exclude *gitignore.GitIgnore,
 	lowerThreshold, upperThreshold float64,
 ) string {
-	out := []string{}
-
 	if len(s.Packages) == 0 {
 		return ""
 	}
 
+	buf := &strings.Builder{}
+	table := tablewriter.NewWriter(buf)
+	var data [][]string
+
 	if ft == Markdown {
-		out = append(out, fmt.Sprintf("![Total Coverage](%s)",
-			generateBadgeURL(s.Coverage*100, lowerThreshold, upperThreshold)))
-		out = append(out, "")
+		buf.Write([]byte(fmt.Sprintf("![Total Coverage](%s)\n\n",
+			generateBadgeURL(s.Coverage*100, lowerThreshold, upperThreshold))))
+	} else {
+		table.SetColumnSeparator("")
 	}
 
 	pkgNames := make([]string, 0, len(s.Packages))
@@ -50,53 +54,42 @@ func (s *Summary) Render(
 		}
 		sort.Strings(fnames)
 
-		pkgFiles := make([]string, 0, len(pkgSum.Files))
+		filePrefix := "    "
+		if !groupFiles {
+			filePrefix = fmt.Sprintf("%s/", pkgName)
+		}
+		pkgFiles := make([][]string, 0, len(pkgSum.Files))
 		for _, fname := range fnames {
 			file := pkgSum.Files[fname]
 			if exclude.MatchesPath(file.AbsPath()) {
 				continue
 			}
-			pkgFiles = append(pkgFiles, file.Render(ft, groupFiles))
+
+			fileCov := strconv.FormatFloat(file.Coverage*100, 'f', 2, 64)
+			pkgFiles = append(pkgFiles, []string{fmt.Sprintf("%s%s", filePrefix, fname),
+				fmt.Sprintf("%s%%", fileCov)})
 		}
 
 		if len(pkgFiles) > 0 {
-			out = append(out, pkgSum.Render(ft))
-			out = append(out, pkgFiles...)
+			pkgCov := strconv.FormatFloat(pkgSum.Coverage*100, 'f', 2, 64)
+			data = append(data, []string{pkgSum.Name, fmt.Sprintf("%s%%", pkgCov)})
+			data = append(data, pkgFiles...)
 		}
 	}
 
+	table.SetAutoWrapText(false)
+	table.SetColumnAlignment([]int{tablewriter.ALIGN_LEFT, tablewriter.ALIGN_RIGHT})
+	table.SetBorder(false)
+	table.SetNoWhiteSpace(true)
+	table.SetTablePadding(" ")
+	table.AppendBulk(data)
+	table.Render()
+
 	if ft == Text {
-		out = append(out, "", fmt.Sprintf("Total Coverage: %.2f%%", s.Coverage*100))
+		buf.Write([]byte(fmt.Sprintf("\nTotal Coverage: %.2f%%", s.Coverage*100)))
 	}
 
-	return strings.Join(out, "\n")
-}
-
-// Render the package summary as a string in the provided format.
-func (p *Package) Render(ft Format) string {
-	cov := strconv.FormatFloat(p.Coverage*100, 'f', 2, 64)
-	switch ft {
-	case Markdown:
-		return fmt.Sprintf("%s | %s%%", p.Name, cov)
-	default:
-		return fmt.Sprintf("%s\t%s%%", p.Name, cov)
-	}
-}
-
-// Render the file summary as a string in the provided format.
-func (f *File) Render(ft Format, group bool) string {
-	cov := strconv.FormatFloat(f.Coverage*100, 'f', 2, 64)
-
-	prefix := "- "
-	if !group {
-		prefix = fmt.Sprintf("%s/", f.Package)
-	}
-	switch ft {
-	case Markdown:
-		return fmt.Sprintf("%s%s | %s%%", prefix, f.Name, cov)
-	default:
-		return fmt.Sprintf("%s%s\t%s%%", prefix, f.Name, cov)
-	}
+	return buf.String()
 }
 
 // FormatFromString parses s into a valid Format value.
