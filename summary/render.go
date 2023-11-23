@@ -22,7 +22,7 @@ const (
 // Render the summary as a string in the provided format.
 func (s *Summary) Render(
 	ft Format, groupFiles bool, exclude *gitignore.GitIgnore,
-	lowerThreshold, upperThreshold float64,
+	lowerThreshold, upperThreshold float64, trimPackagePrefix string,
 ) string {
 	if len(s.Packages) == 0 {
 		return ""
@@ -48,6 +48,8 @@ func (s *Summary) Render(
 	for _, pkgName := range pkgNames {
 		pkgSum := s.Packages[pkgName]
 
+		pkgName = strings.TrimPrefix(pkgName, trimPackagePrefix)
+
 		fnames := make([]string, 0, len(pkgSum.Files))
 		for fname := range pkgSum.Files {
 			fnames = append(fnames, fname)
@@ -72,7 +74,7 @@ func (s *Summary) Render(
 
 		if len(pkgFiles) > 0 {
 			pkgCov := strconv.FormatFloat(pkgSum.Coverage*100, 'f', 2, 64)
-			data = append(data, []string{pkgSum.Name, fmt.Sprintf("%s%%", pkgCov)})
+			data = append(data, []string{pkgName, fmt.Sprintf("%s%%", pkgCov)})
 			data = append(data, pkgFiles...)
 		}
 	}
