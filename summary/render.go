@@ -37,20 +37,12 @@ func (s *Summary) Render(
 
 	pkgNames := make([]string, 0, len(s.Packages))
 	for pkgName := range s.Packages {
-		if exclude.MatchesPath(pkgName) {
-			continue
-		}
 		pkgNames = append(pkgNames, pkgName)
 	}
 	sort.Strings(pkgNames)
 
 	for _, pkgName := range pkgNames {
 		pkgSum := s.Packages[pkgName]
-		out = append(out, pkgSum.Render(ft))
-
-		if len(pkgSum.Files) == 0 {
-			continue
-		}
 
 		fnames := make([]string, 0, len(pkgSum.Files))
 		for fname := range pkgSum.Files {
@@ -58,12 +50,18 @@ func (s *Summary) Render(
 		}
 		sort.Strings(fnames)
 
+		pkgFiles := make([]string, 0, len(pkgSum.Files))
 		for _, fname := range fnames {
 			file := pkgSum.Files[fname]
 			if exclude.MatchesPath(file.AbsPath()) {
 				continue
 			}
-			out = append(out, file.Render(ft, groupFiles))
+			pkgFiles = append(pkgFiles, file.Render(ft, groupFiles))
+		}
+
+		if len(pkgFiles) > 0 {
+			out = append(out, pkgSum.Render(ft))
+			out = append(out, pkgFiles...)
 		}
 	}
 
