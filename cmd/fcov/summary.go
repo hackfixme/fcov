@@ -11,9 +11,9 @@ import (
 
 	gitignore "github.com/sabhiram/go-gitignore"
 
-	"github.com/friendlycaptcha/fcov/lib"
 	"github.com/friendlycaptcha/fcov/parse"
 	"github.com/friendlycaptcha/fcov/summary"
+	"github.com/friendlycaptcha/fcov/types"
 )
 
 // Summary is the fcov summary command.
@@ -96,7 +96,7 @@ func (o *ThresholdsOption) UnmarshalText(text []byte) error {
 
 // Run the fcov summary command.
 func (s *Summary) Run() error {
-	cov := lib.NewCoverage()
+	cov := types.NewCoverage()
 	filterCov := gitignore.CompileIgnoreLines(s.Filter...)
 	filterOut := gitignore.CompileIgnoreLines(s.FilterOutput...)
 

@@ -1,4 +1,4 @@
-package lib
+package types
 
 // FileLocation specifies the line and column number location in a file.
 type FileLocation struct {

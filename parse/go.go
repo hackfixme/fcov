@@ -8,18 +8,18 @@ import (
 
 	gitignore "github.com/sabhiram/go-gitignore"
 
-	"github.com/friendlycaptcha/fcov/lib"
+	"github.com/friendlycaptcha/fcov/types"
 )
 
 type parsedGoLine struct {
 	filename string
-	block    lib.FileBlock
-	stats    lib.Stats
+	block    types.FileBlock
+	stats    types.Stats
 }
 
 // Go parses a Go coverage file into the provided coverage, applying the
 // provided file filter.
-func Go(r io.Reader, cov *lib.Coverage, filter *gitignore.GitIgnore) error {
+func Go(r io.Reader, cov *types.Coverage, filter *gitignore.GitIgnore) error {
 	scanner := bufio.NewScanner(r)
 
 	for scanner.Scan() {
@@ -38,7 +38,7 @@ func Go(r io.Reader, cov *lib.Coverage, filter *gitignore.GitIgnore) error {
 		}
 
 		if _, ok := cov.Files[p.filename]; !ok {
-			cov.Files[p.filename] = map[lib.FileBlock]*lib.Stats{}
+			cov.Files[p.filename] = map[types.FileBlock]*types.Stats{}
 		}
 
 		if s, ok := cov.Files[p.filename][p.block]; ok {

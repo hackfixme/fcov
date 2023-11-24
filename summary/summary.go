@@ -3,19 +3,19 @@ package summary
 import (
 	"path"
 
-	"github.com/friendlycaptcha/fcov/lib"
+	"github.com/friendlycaptcha/fcov/types"
 )
 
 // Package holds coverage information related to a package.
 type Package struct {
-	lib.Stats
+	types.Stats
 	Name  string
 	Files map[string]*File
 }
 
 // File holds coverage information related to a file.
 type File struct {
-	lib.Stats
+	types.Stats
 	Name    string
 	Package string
 }
@@ -27,12 +27,12 @@ func (f File) AbsPath() string {
 
 // Summary holds global coverage information.
 type Summary struct {
-	lib.Stats
+	types.Stats
 	Packages map[string]*Package
 }
 
 // Create a new summary based on the provided coverage.
-func Create(cov *lib.Coverage) *Summary {
+func Create(cov *types.Coverage) *Summary {
 	sum := &Summary{}
 
 	for filename, fileBlocks := range cov.Files {
