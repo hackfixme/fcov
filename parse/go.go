@@ -17,8 +17,9 @@ type parsedGoLine struct {
 	stats    lib.Stats
 }
 
-// Go parses a Go coverage file into the provided coverage.
-func Go(r io.Reader, cov *lib.Coverage, exclude *gitignore.GitIgnore) error {
+// Go parses a Go coverage file into the provided coverage, applying the
+// provided file filter.
+func Go(r io.Reader, cov *lib.Coverage, filter *gitignore.GitIgnore) error {
 	scanner := bufio.NewScanner(r)
 
 	for scanner.Scan() {
@@ -32,7 +33,7 @@ func Go(r io.Reader, cov *lib.Coverage, exclude *gitignore.GitIgnore) error {
 			return fmt.Errorf("failed parsing line '%s': %w", line, err)
 		}
 
-		if exclude.MatchesPath(p.filename) {
+		if filter.MatchesPath(p.filename) {
 			continue
 		}
 

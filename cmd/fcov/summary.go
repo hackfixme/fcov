@@ -19,8 +19,8 @@ import (
 // Summary is the fcov summary command.
 type Summary struct {
 	Files             []string         `arg:"" help:"One or more coverage files." type:"existingfile"`
-	Exclude           []string         `help:"Glob patterns applied on file paths to exclude files from the coverage calculation and output. \n Example: '*,!*pkg*' would exclude all files except those that contain 'pkg'. " placeholder:"<glob pattern>"`
-	ExcludeOutput     []string         `help:"Glob patterns applied on file paths to exclude files from the output, but *not* from the coverage calculation. " placeholder:"<glob pattern>"`
+	Filter            []string         `help:"Glob patterns applied on file paths to filter files from the coverage calculation and output. \n Example: '*,!*pkg*' would exclude all files except those that contain 'pkg'. " placeholder:"<glob pattern>"`
+	FilterOutput      []string         `help:"Glob patterns applied on file paths to filter files from the output, but *not* from the coverage calculation. " placeholder:"<glob pattern>"`
 	NestFiles         bool             `help:"Nest files under packages when rendering to text or Markdown. " default:"true" negatable:""`
 	Output            OutputOption     `short:"o" help:"Write the summary to stdout or a file. More than one value can be provided, separated by comma.\nValues can be either formats ('txt' or 'md'), or filenames whose formats will be inferred by their extension.\n Example: 'txt,summary.md' would write the summary in text format to stdout, and to a summary.md file in Markdown format. " default:"txt"`
 	Thresholds        ThresholdsOption `help:"Lower and upper threshold percentages for badge and health indicators. " default:"50,75"`
@@ -97,8 +97,8 @@ func (o *ThresholdsOption) UnmarshalText(text []byte) error {
 // Run the fcov summary command.
 func (s *Summary) Run() error {
 	cov := lib.NewCoverage()
-	excludeCov := gitignore.CompileIgnoreLines(s.Exclude...)
-	excludeOut := gitignore.CompileIgnoreLines(s.ExcludeOutput...)
+	filterCov := gitignore.CompileIgnoreLines(s.Filter...)
+	filterOut := gitignore.CompileIgnoreLines(s.FilterOutput...)
 
 	for _, fpath := range s.Files {
 		file, err := os.Open(fpath)
@@ -107,7 +107,7 @@ func (s *Summary) Run() error {
 		}
 		defer file.Close()
 
-		if err = parse.Go(file, cov, excludeCov); err != nil {
+		if err = parse.Go(file, cov, filterCov); err != nil {
 			return err
 		}
 	}
@@ -122,7 +122,7 @@ func (s *Summary) Run() error {
 		)
 		if render, ok = renders[out.Format]; !ok {
 			render = sum.Render(
-				out.Format, s.NestFiles, excludeOut, s.Thresholds.Lower,
+				out.Format, s.NestFiles, filterOut, s.Thresholds.Lower,
 				s.Thresholds.Upper, s.TrimPackagePrefix)
 			renders[out.Format] = render
 		}

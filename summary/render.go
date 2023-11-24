@@ -24,7 +24,11 @@ const (
 // Prefix used to distinguish package from file paths in the pre-rendered output.
 const pkgPrefix = '\x00'
 
-// Render the summary as a string in the provided format.
+// Render the summary as a string in the provided format, applying the provided
+// filter, and style adjustments.
+// The lower and upper coverage thresholds are used by formats like Markdown to
+// apply different colors depending on their values. trimPackagePrefix will
+// remove the matching prefix from the absolute file path.
 func (s *Summary) Render(
 	ft Format, nestFiles bool, filter *gitignore.GitIgnore,
 	lowerThreshold, upperThreshold float64, trimPackagePrefix string,
