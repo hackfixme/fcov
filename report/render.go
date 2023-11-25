@@ -21,8 +21,8 @@ const (
 	Markdown Format = "md"
 )
 
-// Prefix used to distinguish package from file paths in the pre-rendered output.
-const pkgPrefix = '\x00'
+// Marker used to distinguish package from file paths in the pre-rendered output.
+const pkgMarker = '\x00'
 
 // Render the report as a string in the provided format, applying the provided
 // filter, and style adjustments.
@@ -128,10 +128,10 @@ func (s *Report) preRender(filter *gitignore.GitIgnore, nestFiles bool, trimPack
 		if !filter.MatchesPath(pkgName) {
 			pkgName = strings.TrimPrefix(pkgName, trimPackagePrefix)
 
-			// HACK: Mark the package lines with magic prefix, so that it can be
-			// distinguished during final rendering. Otherwise the sum data
+			// HACK: Mark package lines with a prefix marker, so that they can
+			// be distinguished during final rendering. Otherwise the sum data
 			// structure would have to be more complicated.
-			pkgName = string(pkgPrefix) + pkgName
+			pkgName = string(pkgMarker) + pkgName
 			sum = append(sum, []string{pkgName,
 				fmt.Sprintf("%s%%", strconv.FormatFloat(pkgSum.Coverage*100, 'f', 2, 64))})
 		}
@@ -143,9 +143,9 @@ func (s *Report) preRender(filter *gitignore.GitIgnore, nestFiles bool, trimPack
 
 func renderMarkdown(sum [][]string, data *[][]string) {
 	for _, line := range sum {
-		// HACK: Package lines are distinguished by a magic prefix. Otherwise
+		// HACK: Package lines are distinguished by a prefix marker. Otherwise
 		// the sum data structure would have to be more complicated.
-		if line[0][0] == pkgPrefix {
+		if line[0][0] == pkgMarker {
 			line[0] = line[0][1:]
 		}
 		line[0] = fmt.Sprintf("`%s`", line[0])
@@ -165,9 +165,9 @@ func renderMarkdownNested(sum [][]string, data *[][]string) {
 		files           [][]string
 	)
 	for i, line := range sum {
-		// HACK: Package lines are distinguished by a magic prefix. Otherwise
+		// HACK: Package lines are distinguished by a prefix marker. Otherwise
 		// the sum data structure would have to be more complicated.
-		if line[0][0] == pkgPrefix {
+		if line[0][0] == pkgMarker {
 			pkgName = line[0][1:]
 			pkgCov = line[1]
 		} else {
@@ -176,7 +176,7 @@ func renderMarkdownNested(sum [][]string, data *[][]string) {
 
 		// If we reached the end, or the next line is a different package, that
 		// means we're done with the current one, so render it.
-		if i == len(sum)-1 || (i+1 < len(sum) && sum[i+1][0][0] == pkgPrefix) {
+		if i == len(sum)-1 || (i+1 < len(sum) && sum[i+1][0][0] == pkgMarker) {
 			var fileData bytes.Buffer
 			if err := tmpl.Execute(&fileData, files); err != nil {
 				panic(err)
@@ -190,9 +190,9 @@ func renderMarkdownNested(sum [][]string, data *[][]string) {
 
 func renderTextNested(sum [][]string, data *[][]string) {
 	for _, line := range sum {
-		// HACK: Package lines are distinguished by a magic prefix. Otherwise
+		// HACK: Package lines are distinguished by a prefix marker. Otherwise
 		// the sum data structure would have to be more complicated.
-		if line[0][0] == pkgPrefix {
+		if line[0][0] == pkgMarker {
 			line[0] = line[0][1:]
 		} else {
 			line[0] = fmt.Sprintf("    %s", line[0])
