@@ -105,8 +105,6 @@ func (s *Report) preRender(filter *gitignore.GitIgnore, nestFiles bool, trimPack
 	for _, pkgName := range pkgNames {
 		pkgSum := s.Packages[pkgName]
 
-		pkgName = strings.TrimPrefix(pkgName, trimPackagePrefix)
-
 		fnames := make([]string, 0, len(pkgSum.Files))
 		for fname := range pkgSum.Files {
 			fnames = append(fnames, fname)
@@ -126,15 +124,18 @@ func (s *Report) preRender(filter *gitignore.GitIgnore, nestFiles bool, trimPack
 			fileCov := strconv.FormatFloat(file.Coverage*100, 'f', 2, 64)
 			pkgFiles = append(pkgFiles, []string{fname, fmt.Sprintf("%s%%", fileCov)})
 		}
-		if len(pkgFiles) > 0 {
+
+		if !filter.MatchesPath(pkgName) {
+			pkgName = strings.TrimPrefix(pkgName, trimPackagePrefix)
+
 			// HACK: Mark the package lines with magic prefix, so that it can be
 			// distinguished during final rendering. Otherwise the sum data
 			// structure would have to be more complicated.
 			pkgName = string(pkgPrefix) + pkgName
 			sum = append(sum, []string{pkgName,
 				fmt.Sprintf("%s%%", strconv.FormatFloat(pkgSum.Coverage*100, 'f', 2, 64))})
-			sum = append(sum, pkgFiles...)
 		}
+		sum = append(sum, pkgFiles...)
 	}
 
 	return sum
