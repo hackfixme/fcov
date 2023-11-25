@@ -6,7 +6,7 @@ import (
 
 // CLI is the command line interface of fcov.
 type CLI struct {
-	Summary Summary `kong:"cmd,help='Generate a coverage summary.'"`
+	Report Report `kong:"cmd,help='Analyze coverage file(s) and create a coverage report.'"`
 }
 
 func main() {

@@ -1,4 +1,4 @@
-package summary
+package report
 
 import (
 	"path"
@@ -25,15 +25,15 @@ func (f File) AbsPath() string {
 	return path.Join(f.Package, f.Name)
 }
 
-// Summary holds global coverage information.
-type Summary struct {
+// Report holds global coverage information.
+type Report struct {
 	types.Stats
 	Packages map[string]*Package
 }
 
-// Create a new summary based on the provided coverage.
-func Create(cov *types.Coverage) *Summary {
-	sum := &Summary{}
+// Create a new report based on the provided coverage.
+func Create(cov *types.Coverage) *Report {
+	sum := &Report{}
 
 	for filename, fileBlocks := range cov.Files {
 		var (

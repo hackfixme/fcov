@@ -12,25 +12,25 @@ import (
 	gitignore "github.com/sabhiram/go-gitignore"
 
 	"github.com/friendlycaptcha/fcov/parse"
-	"github.com/friendlycaptcha/fcov/summary"
+	"github.com/friendlycaptcha/fcov/report"
 	"github.com/friendlycaptcha/fcov/types"
 )
 
-// Summary is the fcov summary command.
-type Summary struct {
+// Report is the fcov report command.
+type Report struct {
 	Files             []string         `arg:"" help:"One or more coverage files." type:"existingfile"`
 	Filter            []string         `help:"Glob patterns applied on file paths to filter files from the coverage calculation and output. \n Example: '*,!*pkg*' would exclude all files except those that contain 'pkg'. " placeholder:"<glob pattern>"`
 	FilterOutput      []string         `help:"Glob patterns applied on file paths to filter files from the output, but *not* from the coverage calculation. " placeholder:"<glob pattern>"`
 	NestFiles         bool             `help:"Nest files under packages when rendering to text or Markdown. " default:"true" negatable:""`
-	Output            OutputOption     `short:"o" help:"Write the summary to stdout or a file. More than one value can be provided, separated by comma.\nValues can be either formats ('txt' or 'md'), or filenames whose formats will be inferred by their extension.\n Example: 'txt,summary.md' would write the summary in text format to stdout, and to a summary.md file in Markdown format. " default:"txt"`
+	Output            OutputOption     `short:"o" help:"Write the report to stdout or a file. More than one value can be provided, separated by comma.\nValues can either be formats ('txt' or 'md'), or filenames whose formats will be inferred by their extension.\n Example: 'txt,report.md' would write the report in text format to stdout, and to a report.md file in Markdown format. " default:"txt"`
 	Thresholds        ThresholdsOption `help:"Lower and upper threshold percentages for badge and health indicators. " default:"50,75"`
 	TrimPackagePrefix string           `help:"Trim this prefix string from the package path in the output. "`
 }
 
-// Output is a destination the summary should be written to. If Filename is
-// empty, the summary will be written to stdout.
+// Output is a destination the report should be written to. If Filename is
+// empty, the report will be written to stdout.
 type Output struct {
-	Format   summary.Format
+	Format   report.Format
 	Filename string
 }
 
@@ -46,14 +46,14 @@ func (o *OutputOption) UnmarshalText(text []byte) error {
 
 	for _, option := range options {
 		out := Output{}
-		format := summary.FormatFromString(option)
+		format := report.FormatFromString(option)
 		if format == "" {
 			// Assume it's a filename, and infer the format from the extension.
 			ext := filepath.Ext(option)
 			if ext == "" {
 				return fmt.Errorf("invalid output value: %s", option)
 			}
-			format = summary.FormatFromString(ext[1:]) // Remove the leading dot
+			format = report.FormatFromString(ext[1:]) // Remove the leading dot
 			if format == "" {
 				return fmt.Errorf("invalid output format: %s", ext[1:])
 			}
@@ -94,8 +94,8 @@ func (o *ThresholdsOption) UnmarshalText(text []byte) error {
 	return nil
 }
 
-// Run the fcov summary command.
-func (s *Summary) Run() error {
+// Run the fcov report command.
+func (s *Report) Run() error {
 	cov := types.NewCoverage()
 	filterCov := gitignore.CompileIgnoreLines(s.Filter...)
 	filterOut := gitignore.CompileIgnoreLines(s.FilterOutput...)
@@ -112,9 +112,9 @@ func (s *Summary) Run() error {
 		}
 	}
 
-	sum := summary.Create(cov)
+	sum := report.Create(cov)
 
-	renders := make(map[summary.Format]string)
+	renders := make(map[report.Format]string)
 	for _, out := range s.Output {
 		var (
 			render string

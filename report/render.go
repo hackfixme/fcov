@@ -1,4 +1,4 @@
-package summary
+package report
 
 import (
 	"bytes"
@@ -12,7 +12,7 @@ import (
 	gitignore "github.com/sabhiram/go-gitignore"
 )
 
-// Format is the type of format a summary can be rendered in.
+// Format is the type of format a report can be rendered in.
 type Format string
 
 // Supported format types.
@@ -24,12 +24,12 @@ const (
 // Prefix used to distinguish package from file paths in the pre-rendered output.
 const pkgPrefix = '\x00'
 
-// Render the summary as a string in the provided format, applying the provided
+// Render the report as a string in the provided format, applying the provided
 // filter, and style adjustments.
 // The lower and upper coverage thresholds are used by formats like Markdown to
 // apply different colors depending on their values. trimPackagePrefix will
 // remove the matching prefix from the absolute file path.
-func (s *Summary) Render(
+func (s *Report) Render(
 	ft Format, nestFiles bool, filter *gitignore.GitIgnore,
 	lowerThreshold, upperThreshold float64, trimPackagePrefix string,
 ) string {
@@ -92,9 +92,9 @@ func (s *Summary) Render(
 	return out
 }
 
-// preRender sorts and flattens the summary, applying any filters, and
+// preRender sorts and flattens the report, applying any filters, and
 // optionally trimming the file paths as needed.
-func (s *Summary) preRender(filter *gitignore.GitIgnore, nestFiles bool, trimPackagePrefix string) [][]string {
+func (s *Report) preRender(filter *gitignore.GitIgnore, nestFiles bool, trimPackagePrefix string) [][]string {
 	pkgNames := make([]string, 0, len(s.Packages))
 	for pkgName := range s.Packages {
 		pkgNames = append(pkgNames, pkgName)
