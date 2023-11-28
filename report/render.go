@@ -125,7 +125,7 @@ func (s *Report) preRender(filter *gitignore.GitIgnore, nestFiles bool, trimPack
 			pkgFiles = append(pkgFiles, []string{fname, fmt.Sprintf("%s%%", fileCov)})
 		}
 
-		if !filter.MatchesPath(pkgName) {
+		if !filter.MatchesPath(pkgName) || (nestFiles && len(pkgFiles) > 0) {
 			pkgName = strings.TrimPrefix(pkgName, trimPackagePrefix)
 
 			// HACK: Mark package lines with a prefix marker, so that they can
