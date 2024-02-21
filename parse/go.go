@@ -66,14 +66,11 @@ func parseGoLine(line string) (parsedGoLine, error) {
 	}
 
 	p.filename = parts[0]
-	n, err := fmt.Sscanf(parts[1], "%d.%d,%d.%d %d %d",
+	_, err := fmt.Sscanf(parts[1], "%d.%d,%d.%d %d %d",
 		&p.block.Start.Line, &p.block.Start.Col, &p.block.End.Line,
 		&p.block.End.Col, &p.stats.NumStatements, &p.stats.HitCount)
 	if err != nil {
 		return p, err
-	}
-	if n != 6 {
-		return p, fmt.Errorf("wrong format")
 	}
 
 	return p, nil
