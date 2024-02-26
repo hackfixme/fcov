@@ -1,24 +1,29 @@
 package main
 
 import (
-	"github.com/alecthomas/kong"
+	"os"
+
+	"github.com/mandelsoft/vfs/pkg/osfs"
+
+	"github.com/friendlycaptcha/fcov/app"
 )
 
-// CLI is the command line interface of fcov.
-type CLI struct {
-	Report Report `kong:"cmd,help='Analyze coverage file(s) and create a coverage report.'"`
+func main() {
+	app.New(
+		app.WithExit(os.Exit),
+		app.WithArgs(os.Args[1:]),
+		app.WithEnv(osEnv{}),
+		app.WithFDs(os.Stdin, os.Stdout, os.Stderr),
+		app.WithFS(osfs.New()),
+	).Run()
 }
 
-func main() {
-	var cli CLI
-	ctx := kong.Parse(&cli,
-		kong.Name("fcov"),
-		kong.UsageOnError(),
-		kong.DefaultEnvars("FCOV"),
-		kong.ConfigureHelp(kong.HelpOptions{
-			Compact: true,
-			Summary: true,
-		}),
-	)
-	ctx.FatalIfErrorf(ctx.Run())
+type osEnv struct{}
+
+func (e osEnv) Get(key string) string {
+	return os.Getenv(key)
+}
+
+func (e osEnv) Set(key, val string) error {
+	return os.Setenv(key, val)
 }

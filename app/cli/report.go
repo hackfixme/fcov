@@ -1,16 +1,16 @@
-package main
+package cli
 
 import (
 	"encoding"
 	"fmt"
-	"io/ioutil"
-	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
 
+	"github.com/mandelsoft/vfs/pkg/vfs"
 	gitignore "github.com/sabhiram/go-gitignore"
 
+	actx "github.com/friendlycaptcha/fcov/app/context"
 	"github.com/friendlycaptcha/fcov/parse"
 	"github.com/friendlycaptcha/fcov/report"
 	"github.com/friendlycaptcha/fcov/types"
@@ -95,13 +95,13 @@ func (o *ThresholdsOption) UnmarshalText(text []byte) error {
 }
 
 // Run the fcov report command.
-func (s *Report) Run() error {
+func (s *Report) Run(appCtx *actx.Context) error {
 	cov := types.NewCoverage()
 	filterCov := gitignore.CompileIgnoreLines(s.Filter...)
 	filterOut := gitignore.CompileIgnoreLines(s.FilterOutput...)
 
 	for _, fpath := range s.Files {
-		file, err := os.Open(fpath)
+		file, err := appCtx.FS.Open(fpath)
 		if err != nil {
 			return err
 		}
@@ -127,13 +127,15 @@ func (s *Report) Run() error {
 			renders[out.Format] = render
 		}
 
-		if out.Filename != "" {
-			err := ioutil.WriteFile(out.Filename, []byte(render), 0644)
-			if err != nil {
+		if out.Filename == "" {
+			if _, err := fmt.Fprintln(appCtx.Stdout, render); err != nil {
 				return err
 			}
-		} else {
-			fmt.Println(render)
+			continue
+		}
+
+		if err := vfs.WriteFile(appCtx.FS, out.Filename, []byte(render), 0644); err != nil {
+			return err
 		}
 	}
 

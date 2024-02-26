@@ -4,8 +4,12 @@ go 1.21
 
 require (
 	github.com/alecthomas/kong v0.8.1
+	github.com/mandelsoft/vfs v0.4.3
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/sabhiram/go-gitignore v0.0.0-20210923224102-525f6e181f06
 )
 
-require github.com/mattn/go-runewidth v0.0.9 // indirect
+require (
+	github.com/mandelsoft/filepath v0.0.0-20240223090642-3e2777258aa3 // indirect
+	github.com/mattn/go-runewidth v0.0.9 // indirect
+)
