@@ -18,7 +18,7 @@ import (
 
 // Report is the fcov report command.
 type Report struct {
-	Files             []string         `arg:"" help:"One or more coverage files." type:"existingfile"`
+	Files             []string         `arg:"" help:"One or more coverage files."` // not using 'existingfile' modifier since it makes it difficult to test with an in-memory FS
 	Filter            []string         `help:"Glob patterns applied on file paths to filter files from the coverage calculation and output. \n Example: '*,!*pkg*' would exclude all files except those that contain 'pkg'. " placeholder:"<glob pattern>"`
 	FilterOutput      []string         `help:"Glob patterns applied on file paths to filter files from the output, but *not* from the coverage calculation. " placeholder:"<glob pattern>"`
 	NestFiles         bool             `help:"Nest files under packages when rendering to text or Markdown. " default:"true" negatable:""`
