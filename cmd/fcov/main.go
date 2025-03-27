@@ -5,7 +5,7 @@ import (
 
 	"github.com/mandelsoft/vfs/pkg/osfs"
 
-	"github.com/friendlycaptcha/fcov/app"
+	"go.hackfix.me/fcov/app"
 )
 
 func main() {

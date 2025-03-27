@@ -3,7 +3,7 @@ package report
 import (
 	"testing"
 
-	"github.com/friendlycaptcha/fcov/types"
+	"go.hackfix.me/fcov/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

@@ -5,8 +5,8 @@ import (
 
 	"github.com/mandelsoft/vfs/pkg/memoryfs"
 
-	"github.com/friendlycaptcha/fcov/app/cli"
-	actx "github.com/friendlycaptcha/fcov/app/context"
+	"go.hackfix.me/fcov/app/cli"
+	actx "go.hackfix.me/fcov/app/context"
 )
 
 // App is the application.

@@ -8,7 +8,7 @@ import (
 
 	gitignore "github.com/sabhiram/go-gitignore"
 
-	"github.com/friendlycaptcha/fcov/types"
+	"go.hackfix.me/fcov/types"
 )
 
 type parsedGoLine struct {

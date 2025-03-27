@@ -1,4 +1,4 @@
-module github.com/friendlycaptcha/fcov
+module go.hackfix.me/fcov
 
 go 1.24
 

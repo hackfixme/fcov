@@ -9,7 +9,7 @@ import (
 	"sync"
 	"testing"
 
-	actx "github.com/friendlycaptcha/fcov/app/context"
+	actx "go.hackfix.me/fcov/app/context"
 
 	"github.com/mandelsoft/vfs/pkg/memoryfs"
 	"github.com/mandelsoft/vfs/pkg/vfs"

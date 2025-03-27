@@ -12,19 +12,19 @@ in pull requests.
 ## Installation
 
 You can download a package for Windows, macOS and Linux from the
-[releases page](https://github.com/FriendlyCaptcha/fcov/releases). Extract the
+[releases page](https://go.hackfix.me/fcov/releases). Extract the
 archive and move the binary to a directory in your system's `$PATH`.
 
 Alternatively, you can build your own binary with these instructions.
 
 First, ensure that you have installed
 [Git](https://github.com/git-guides/install-git) and the latest
-[Go toolchain](https://golang.org/doc/install) (at least version 1.21).
+[Go toolchain](https://golang.org/doc/install) (at least version 1.24).
 
 Then run:
 
 ```sh
-go install github.com/friendlycaptcha/fcov@latest
+go install go.hackfix.me/fcov/cmd/fcov@latest
 ```
 
 
@@ -92,20 +92,20 @@ be written to stdout, or one or more files.
 
   This outputs a report in text format with files nested under each package:
   ```
-  github.com/friendlycaptcha/fcov/app      100.00%
+  go.hackfix.me/fcov/app      100.00%
       app.go                               100.00%
       options.go                           100.00%
-  github.com/friendlycaptcha/fcov/app/cli   83.33%
+  go.hackfix.me/fcov/app/cli   83.33%
       cli.go                                91.67%
       report.go                             81.25%
-  github.com/friendlycaptcha/fcov/cmd/fcov   0.00%
+  go.hackfix.me/fcov/cmd/fcov   0.00%
       main.go                                0.00%
-  github.com/friendlycaptcha/fcov/parse    100.00%
+  go.hackfix.me/fcov/parse    100.00%
       go.go                                100.00%
-  github.com/friendlycaptcha/fcov/report   100.00%
+  go.hackfix.me/fcov/report   100.00%
       render.go                            100.00%
       report.go                            100.00%
-  github.com/friendlycaptcha/fcov/types     80.00%
+  go.hackfix.me/fcov/types     80.00%
       types.go                              80.00%
   
   Total Coverage: 94.16%
@@ -137,7 +137,7 @@ be written to stdout, or one or more files.
 - Exclude all files except the `fcov/report` package:
   ```sh
   $ fcov report --filter '*,!fcov/report' coverage.txt
-  github.com/friendlycaptcha/fcov/report 100.00%
+  go.hackfix.me/fcov/report 100.00%
       render.go                          100.00%
       report.go                          100.00%
   
@@ -149,7 +149,7 @@ be written to stdout, or one or more files.
 - Exclude all files only from the report, except the `fcov/report` package:
   ```sh
   $ fcov report --filter-output '*,!fcov/report' coverage.txt
-  github.com/friendlycaptcha/fcov/report 100.00%
+  go.hackfix.me/fcov/report 100.00%
       render.go                          100.00%
       report.go                          100.00%
   
@@ -163,9 +163,9 @@ be written to stdout, or one or more files.
 - Disable file nesting below packages:
   ```sh
   $ fcov report --filter-output '*,!fcov/report' --no-nest-files coverage.txt
-  github.com/friendlycaptcha/fcov/report           100.00%
-  github.com/friendlycaptcha/fcov/report/render.go 100.00%
-  github.com/friendlycaptcha/fcov/report/report.go 100.00%
+  go.hackfix.me/fcov/report           100.00%
+  go.hackfix.me/fcov/report/render.go 100.00%
+  go.hackfix.me/fcov/report/report.go 100.00%
   
   Total Coverage: 94.16%
   ```
@@ -187,14 +187,14 @@ be written to stdout, or one or more files.
 
   ![Total Coverage](https://img.shields.io/badge/Total%20Coverage-94.16%25-success?style=flat)
   
-  | Package                                                                                                                                                                                 | Coverage |
-  | :------                                                                                                                                                                                 | -------: |
-  | <details><summary>`github.com/friendlycaptcha/fcov/app`</summary><table><tr><td>`app.go`</td><td>100.00%</td></tr><tr><td>`options.go`</td><td>100.00%</td></tr></table></details>      |  100.00% |
-  | <details><summary>`github.com/friendlycaptcha/fcov/app/cli`</summary><table><tr><td>`cli.go`</td><td>91.67%</td></tr><tr><td>`report.go`</td><td>81.25%</td></tr></table></details>     |   83.33% |
-  | <details><summary>`github.com/friendlycaptcha/fcov/cmd/fcov`</summary><table><tr><td>`main.go`</td><td>0.00%</td></tr></table></details>                                                |    0.00% |
-  | <details><summary>`github.com/friendlycaptcha/fcov/parse`</summary><table><tr><td>`go.go`</td><td>100.00%</td></tr></table></details>                                                   |  100.00% |
-  | <details><summary>`github.com/friendlycaptcha/fcov/report`</summary><table><tr><td>`render.go`</td><td>100.00%</td></tr><tr><td>`report.go`</td><td>100.00%</td></tr></table></details> |  100.00% |
-  | <details><summary>`github.com/friendlycaptcha/fcov/types`</summary><table><tr><td>`types.go`</td><td>80.00%</td></tr></table></details>                                                 |   80.00% |
+  | Package                                                                                                                                                                                | Coverage |
+  | :------                                                                                                                                                                                | -------: |
+  | <details><summary>`go.hackfix.me/fcov/app`</summary><table><tr><td>`app.go`</td><td>100.00%</td></tr><tr><td>`options.go`</td><td>100.00%</td></tr></table></details>      |  100.00%  |
+  | <details><summary>`go.hackfix.me/fcov/app/cli`</summary><table><tr><td>`cli.go`</td><td>91.67%</td></tr><tr><td>`report.go`</td><td>81.25%</td></tr></table></details>     |   83.33%  |
+  | <details><summary>`go.hackfix.me/fcov/cmd/fcov`</summary><table><tr><td>`main.go`</td><td>0.00%</td></tr></table></details>                                                |    0.00%  |
+  | <details><summary>`go.hackfix.me/fcov/parse`</summary><table><tr><td>`go.go`</td><td>100.00%</td></tr></table></details>                                                   |  100.00%  |
+  | <details><summary>`go.hackfix.me/fcov/report`</summary><table><tr><td>`render.go`</td><td>100.00%</td></tr><tr><td>`report.go`</td><td>100.00%</td></tr></table></details> |  100.00%  |
+  | <details><summary>`go.hackfix.me/fcov/types`</summary><table><tr><td>`types.go`</td><td>80.00%</td></tr></table></details>                                                 |   80.00%  |
 
   <hr>
 
@@ -210,23 +210,23 @@ be written to stdout, or one or more files.
 
   ![Total Coverage](https://img.shields.io/badge/Total%20Coverage-94.16%25-success?style=flat)
   
-  | Package                                             | Coverage |
-  | :------                                             | -------: |
-  | `github.com/friendlycaptcha/fcov/app`               |  100.00% |
-  | `github.com/friendlycaptcha/fcov/app/app.go`        |  100.00% |
-  | `github.com/friendlycaptcha/fcov/app/options.go`    |  100.00% |
-  | `github.com/friendlycaptcha/fcov/app/cli`           |   83.33% |
-  | `github.com/friendlycaptcha/fcov/app/cli/cli.go`    |   91.67% |
-  | `github.com/friendlycaptcha/fcov/app/cli/report.go` |   81.25% |
-  | `github.com/friendlycaptcha/fcov/cmd/fcov`          |    0.00% |
-  | `github.com/friendlycaptcha/fcov/cmd/fcov/main.go`  |    0.00% |
-  | `github.com/friendlycaptcha/fcov/parse`             |  100.00% |
-  | `github.com/friendlycaptcha/fcov/parse/go.go`       |  100.00% |
-  | `github.com/friendlycaptcha/fcov/report`            |  100.00% |
-  | `github.com/friendlycaptcha/fcov/report/render.go`  |  100.00% |
-  | `github.com/friendlycaptcha/fcov/report/report.go`  |  100.00% |
-  | `github.com/friendlycaptcha/fcov/types`             |   80.00% |
-  | `github.com/friendlycaptcha/fcov/types/types.go`    |   80.00% |
+  | Package                                | Coverage |
+  | :------                                | -------: |
+  | `go.hackfix.me/fcov/app`               |  100.00% |
+  | `go.hackfix.me/fcov/app/app.go`        |  100.00% |
+  | `go.hackfix.me/fcov/app/options.go`    |  100.00% |
+  | `go.hackfix.me/fcov/app/cli`           |   83.33% |
+  | `go.hackfix.me/fcov/app/cli/cli.go`    |   91.67% |
+  | `go.hackfix.me/fcov/app/cli/report.go` |   81.25% |
+  | `go.hackfix.me/fcov/cmd/fcov`          |    0.00% |
+  | `go.hackfix.me/fcov/cmd/fcov/main.go`  |    0.00% |
+  | `go.hackfix.me/fcov/parse`             |  100.00% |
+  | `go.hackfix.me/fcov/parse/go.go`       |  100.00% |
+  | `go.hackfix.me/fcov/report`            |  100.00% |
+  | `go.hackfix.me/fcov/report/render.go`  |  100.00% |
+  | `go.hackfix.me/fcov/report/report.go`  |  100.00% |
+  | `go.hackfix.me/fcov/types`             |   80.00% |
+  | `go.hackfix.me/fcov/types/types.go`    |   80.00% |
 
   <hr>
 
@@ -241,7 +241,7 @@ be written to stdout, or one or more files.
 
 - Trim a common package prefix:
   ```sh
-  $ fcov report --trim-package-prefix github.com/friendlycaptcha/ coverage.txt
+  $ fcov report --trim-package-prefix go.hackfix.me/ coverage.txt
   fcov/app       100.00%
       app.go     100.00%
       options.go 100.00%

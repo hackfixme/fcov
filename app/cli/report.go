@@ -10,10 +10,10 @@ import (
 	"github.com/mandelsoft/vfs/pkg/vfs"
 	gitignore "github.com/sabhiram/go-gitignore"
 
-	actx "github.com/friendlycaptcha/fcov/app/context"
-	"github.com/friendlycaptcha/fcov/parse"
-	"github.com/friendlycaptcha/fcov/report"
-	"github.com/friendlycaptcha/fcov/types"
+	actx "go.hackfix.me/fcov/app/context"
+	"go.hackfix.me/fcov/parse"
+	"go.hackfix.me/fcov/report"
+	"go.hackfix.me/fcov/types"
 )
 
 // Report is the fcov report command.

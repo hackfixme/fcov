@@ -3,7 +3,7 @@ package report
 import (
 	"path"
 
-	"github.com/friendlycaptcha/fcov/types"
+	"go.hackfix.me/fcov/types"
 )
 
 // Package holds coverage information related to a package.

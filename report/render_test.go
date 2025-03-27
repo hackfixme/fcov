@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/friendlycaptcha/fcov/types"
+	"go.hackfix.me/fcov/types"
 )
 
 func TestReportRender(t *testing.T) {

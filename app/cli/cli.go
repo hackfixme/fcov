@@ -2,7 +2,7 @@ package cli
 
 import (
 	"github.com/alecthomas/kong"
-	actx "github.com/friendlycaptcha/fcov/app/context"
+	actx "go.hackfix.me/fcov/app/context"
 )
 
 // CLI is the command line interface of fcov.
