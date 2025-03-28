@@ -1,3 +1,6 @@
 *.exe
 .env
 /fcov
+/dist
+/*.txt
+*.log
