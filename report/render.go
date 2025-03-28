@@ -54,8 +54,18 @@ func (s *Report) Render(
 			data = sum
 		}
 	case Markdown:
+		table.SetCenterSeparator("|")
+		table.SetAutoFormatHeaders(false)
+		table.SetBorders(tablewriter.Border{Left: true, Top: false, Right: true, Bottom: false})
+		table.SetCenterSeparator("|")
+
 		buf.Write([]byte(fmt.Sprintf("![Total Coverage](%s)\n\n",
 			generateBadgeURL(s.Coverage*100, lowerThreshold, upperThreshold))))
+
+		if len(sum) == 0 {
+			break
+		}
+
 		// Set the headers manually instead of using table.SetHeader because it
 		// doesn't support GitHub's column alignment syntax.
 		// See https://github.com/olekukonko/tablewriter/pull/181
@@ -67,11 +77,6 @@ func (s *Report) Render(
 		} else {
 			renderMarkdown(sum, &data)
 		}
-
-		table.SetCenterSeparator("|")
-		table.SetAutoFormatHeaders(false)
-		table.SetBorders(tablewriter.Border{Left: true, Top: false, Right: true, Bottom: false})
-		table.SetCenterSeparator("|")
 	}
 
 	table.SetAutoWrapText(false)
@@ -132,8 +137,10 @@ func (s *Report) preRender(filter *gitignore.GitIgnore, nestFiles bool, trimPack
 			// be distinguished during final rendering. Otherwise the sum data
 			// structure would have to be more complicated.
 			pkgName = string(pkgMarker) + pkgName
-			sum = append(sum, []string{pkgName,
-				fmt.Sprintf("%s%%", strconv.FormatFloat(pkgSum.Coverage*100, 'f', 2, 64))})
+			sum = append(sum, []string{
+				pkgName,
+				fmt.Sprintf("%s%%", strconv.FormatFloat(pkgSum.Coverage*100, 'f', 2, 64)),
+			})
 		}
 		sum = append(sum, pkgFiles...)
 	}

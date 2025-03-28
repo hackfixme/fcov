@@ -59,7 +59,7 @@ func TestReportRender(t *testing.T) {
 		},
 	}
 
-	var tests = []struct {
+	tests := []struct {
 		name              string
 		format            Format
 		nestFiles         bool
@@ -117,6 +117,15 @@ func TestReportRender(t *testing.T) {
 				"| `path/pkg1/file1.go` |   35.42% |\n" +
 				"| `path/pkg1/file2.go` |   97.47% |\n" +
 				"| `path/pkg2`          |   64.86% |",
+		},
+		{
+			name:              "md_filter_all",
+			format:            Markdown,
+			nestFiles:         false,
+			filter:            gitignore.CompileIgnoreLines("*"),
+			trimPackagePrefix: "",
+
+			want: "![Total Coverage](https://img.shields.io/badge/Total%20Coverage-84.90%25-yellow?style=flat)\n",
 		},
 	}
 
@@ -220,7 +229,7 @@ func TestRenderMarkdownNested(t *testing.T) {
 func TestRenderTextNested(t *testing.T) {
 	t.Parallel()
 
-	var tests = []struct {
+	tests := []struct {
 		name string
 		sum  [][]string
 		want [][]string
@@ -285,18 +294,24 @@ func TestFormatFromString(t *testing.T) {
 func TestGenerateBadgeURL(t *testing.T) {
 	t.Parallel()
 
-	var tests = []struct {
+	tests := []struct {
 		cov            float64
 		lowerThreshold float64
 		upperThreshold float64
 		want           string
 	}{
-		{80, 70, 90,
-			"https://img.shields.io/badge/Total%20Coverage-80.00%25-yellow?style=flat"},
-		{60, 70, 90,
-			"https://img.shields.io/badge/Total%20Coverage-60.00%25-critical?style=flat"},
-		{90, 70, 90,
-			"https://img.shields.io/badge/Total%20Coverage-90.00%25-success?style=flat"},
+		{
+			80, 70, 90,
+			"https://img.shields.io/badge/Total%20Coverage-80.00%25-yellow?style=flat",
+		},
+		{
+			60, 70, 90,
+			"https://img.shields.io/badge/Total%20Coverage-60.00%25-critical?style=flat",
+		},
+		{
+			90, 70, 90,
+			"https://img.shields.io/badge/Total%20Coverage-90.00%25-success?style=flat",
+		},
 	}
 	for _, tt := range tests {
 		got := generateBadgeURL(tt.cov, tt.lowerThreshold, tt.upperThreshold)
