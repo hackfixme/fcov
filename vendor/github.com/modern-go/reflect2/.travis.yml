@@ -1,16 +1,15 @@
 language: go
-sudo: false
+
 go:
-  - 1.13.x
-  - tip
+  - 1.9.x
+  - 1.x
 
 before_install:
   - go get -t -v ./...
+  - go get -t -v github.com/modern-go/reflect2-tests/...
 
 script:
-  - go generate
-  - git diff --cached --exit-code
-  - ./go.test.sh
+  - ./test.sh
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)

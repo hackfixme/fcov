@@ -14,9 +14,11 @@ const (
 )
 
 // Help flag.
-type helpValue bool
+type helpFlag bool
 
-func (h helpValue) BeforeReset(ctx *Context) error {
+func (h helpFlag) IgnoreDefault() {}
+
+func (h helpFlag) BeforeReset(ctx *Context) error {
 	options := ctx.Kong.helpOptions
 	options.Summary = false
 	err := ctx.Kong.help(options, ctx)
@@ -386,7 +388,7 @@ func newHelpWriter(ctx *Context, options HelpOptions) *helpWriter {
 	return w
 }
 
-func (h *helpWriter) Printf(format string, args ...interface{}) {
+func (h *helpWriter) Printf(format string, args ...any) {
 	h.Print(fmt.Sprintf(format, args...))
 }
 
@@ -415,7 +417,7 @@ func (h *helpWriter) Write(w io.Writer) error {
 
 func (h *helpWriter) Wrap(text string) {
 	w := bytes.NewBuffer(nil)
-	doc.ToText(w, strings.TrimSpace(text), "", "    ", h.width)
+	doc.ToText(w, strings.TrimSpace(text), "", "    ", h.width) //nolint:staticcheck // cross-package links not possible
 	for _, line := range strings.Split(strings.TrimSpace(w.String()), "\n") {
 		h.Print(line)
 	}
@@ -470,7 +472,7 @@ func writeTwoColumns(w *helpWriter, rows [][2]string) {
 
 	for _, row := range rows {
 		buf := bytes.NewBuffer(nil)
-		doc.ToText(buf, row[1], "", strings.Repeat(" ", defaultIndent), w.width-leftSize-defaultColumnPadding)
+		doc.ToText(buf, row[1], "", strings.Repeat(" ", defaultIndent), w.width-leftSize-defaultColumnPadding) //nolint:staticcheck // cross-package links not possible
 		lines := strings.Split(strings.TrimRight(buf.String(), "\n"), "\n")
 
 		line := fmt.Sprintf("%-*s", leftSize, row[0])
@@ -490,28 +492,24 @@ func formatFlag(haveShort bool, flag *Flag) string {
 	flagString := ""
 	name := flag.Name
 	isBool := flag.IsBool()
+	isCounter := flag.IsCounter()
+
+	short := ""
 	if flag.Short != 0 {
-		if isBool && flag.Tag.Negatable {
-			flagString += fmt.Sprintf("-%c, --[no-]%s", flag.Short, name)
-		} else {
-			flagString += fmt.Sprintf("-%c, --%s", flag.Short, name)
-		}
-	} else {
-		if isBool && flag.Tag.Negatable {
-			if haveShort {
-				flagString = fmt.Sprintf("    --[no-]%s", name)
-			} else {
-				flagString = fmt.Sprintf("--[no-]%s", name)
-			}
-		} else {
-			if haveShort {
-				flagString += fmt.Sprintf("    --%s", name)
-			} else {
-				flagString += fmt.Sprintf("--%s", name)
-			}
-		}
+		short = "-" + string(flag.Short) + ", "
+	} else if haveShort {
+		short = "    "
 	}
-	if !isBool {
+
+	if isBool && flag.Tag.Negatable == negatableDefault {
+		name = "[no-]" + name
+	} else if isBool && flag.Tag.Negatable != "" {
+		name += "/" + flag.Tag.Negatable
+	}
+
+	flagString += fmt.Sprintf("%s--%s", short, name)
+
+	if !isBool && !isCounter {
 		flagString += fmt.Sprintf("=%s", flag.FormatPlaceHolder())
 	}
 	return flagString
