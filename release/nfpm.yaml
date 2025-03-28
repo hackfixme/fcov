@@ -1,0 +1,21 @@
+name: "fcov"
+arch: "${GOARCH}"
+platform: "linux"
+version: "${VERSION}"
+version_schema: semver
+section: "default"
+maintainer: "hackFIXME"
+description: |
+  Friendly code coverage tool
+depends:
+- ca-certificates
+homepage: "https://go.hackfix.me/fcov"
+license: "AGPL-3.0"
+contents:
+- src: ./fcov
+  dst: /usr/bin/fcov
+
+deb:
+  compression: xz
+  fields:
+    Bugs: https://github.com/hackfixme/fcov/issues
