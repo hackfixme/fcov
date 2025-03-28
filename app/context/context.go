@@ -1,6 +1,7 @@
 package context
 
 import (
+	"context"
 	"io"
 	"log/slog"
 
@@ -11,12 +12,18 @@ import (
 // the application to avoid direct dependencies on external systems, and make
 // testing easier.
 type Context struct {
-	FS     vfs.FileSystem
-	Env    Environment
-	Logger *slog.Logger
+	Ctx    context.Context // global context
+	FS     vfs.FileSystem  // filesystem
+	Env    Environment     // process environment
+	Logger *slog.Logger    // global logger
+
+	// Standard streams
 	Stdin  io.Reader
 	Stdout io.Writer
 	Stderr io.Writer
+
+	// Metadata
+	Version *VersionInfo
 }
 
 // Environment is the interface to the process environment.
