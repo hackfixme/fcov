@@ -41,7 +41,7 @@ runs:
   using: "composite"
   steps:
     - name: Install Go
-      uses: buildjet/setup-go@v5
+      uses: actions/setup-go@v5
       with:
         go-version: ${{ inputs.go-version }}
 
