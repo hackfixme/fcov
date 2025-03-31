@@ -26,10 +26,10 @@ inputs:
     description: 'Prefix string to trim from the package path in the report'
     required: false
     default: ''
-  report-path:
-    description: 'Path where to save the coverage report'
+  upload-artifact:
+    description: 'Whether to upload coverage report as build artifact'
     required: false
-    default: 'coverage/coverage-report.md'
+    default: 'true'
 
 outputs:
   total-coverage:
@@ -58,8 +58,18 @@ runs:
           --filter '${{ inputs.coverage-filter }}' \
           --filter-output-file '${{ inputs.changed-files }}' \
           --trim-package-prefix '${{ inputs.trim-package-prefix }}' \
-          --output '${{ inputs.report-path }}' \
+          --output 'txt,${{ inputs.coverage-path }}/coverage-report.txt,${{ inputs.coverage-path }}/coverage-report.md' \
           '${{ inputs.coverage-path }}'
+
+    - name: Upload job artifacts
+      if: inputs.upload-artifact == 'true'
+      uses: actions/upload-artifact@v4
+      with:
+        name: coverage-${{ github.run_id }}_${{ github.run_attempt }}
+        retention-days: 30
+        path: |
+          ${{ inputs.coverage-path }}/coverage-report.txt
+          ${{ inputs.coverage-path }}/coverage-report.md
 
     - name: Post PR comment
       if: inputs.post-comment == 'true' && github.event_name == 'pull_request'
@@ -67,4 +77,4 @@ runs:
       with:
         header: coverage
         recreate: true
-        path: ${{ inputs.report-path }}
+        path: ${{ inputs.coverage-path }}/coverage-report.md
