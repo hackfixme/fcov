@@ -1,0 +1,70 @@
+name: 'fcov Coverage Report'
+description: 'Generate and post coverage reports using fcov'
+author: 'imiric'
+
+inputs:
+  go-version:
+    description: 'Go version to use'
+    required: false
+    default: '1.24'
+  coverage-path:
+    description: 'Path to directory containing Go coverage files'
+    required: true
+  changed-files:
+    description: 'Path to changed files'
+    required: true
+  post-comment:
+    description: 'Whether to post coverage as PR comment'
+    required: false
+    default: 'true'
+  coverage-filter:
+    description: 'File path patterns to filter from the coverage calculation and report'
+    required: false
+    # TODO: Make into an array
+    default: '*[._]gen.go,*.qtpl,*.sql.go'
+  trim-package-prefix:
+    description: 'Prefix string to trim from the package path in the report'
+    required: false
+    default: ''
+  report-path:
+    description: 'Path where to save the coverage report'
+    required: false
+    default: 'coverage/coverage-report.md'
+
+outputs:
+  total-coverage:
+    description: 'Total coverage percentage'
+    value: ${{ steps.create-report.outputs.total-coverage }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Install Go
+      uses: buildjet/setup-go@v5
+      with:
+        go-version: ${{ inputs.go-version }}
+
+    - name: Install fcov
+      shell: bash
+      env:
+        ACTION_REF: ${{ github.action_ref }}
+      run: go install go.hackfix.me/fcov/cmd/fcov@${ACTION_REF}
+
+    - name: Create coverage report
+      id: create-report
+      shell: bash
+      run: |
+        fcov report \
+          --filter '${{ inputs.coverage-filter }}' \
+          --filter-output-file '${{ inputs.changed-files }}' \
+          --trim-package-prefix '${{ inputs.trim-package-prefix }}' \
+          --output '${{ inputs.report-path }}' \
+          '${{ inputs.coverage-path }}'
+
+    - name: Post PR comment
+      if: inputs.post-comment == 'true' && github.event_name == 'pull_request'
+      uses: marocchino/sticky-pull-request-comment@v2
+      with:
+        header: coverage
+        recreate: true
+        path: ${{ inputs.report-path }}
