@@ -10,18 +10,19 @@ inputs:
   coverage-path:
     description: 'Path to directory containing Go coverage files'
     required: true
-  changed-files:
-    description: 'Path to changed files'
-    required: true
-  post-comment:
-    description: 'Whether to post coverage as PR comment'
-    required: false
-    default: 'true'
   coverage-filter:
     description: 'File path patterns to filter from the coverage calculation and report'
     required: false
     # TODO: Make into an array
     default: '*[._]gen.go,*.qtpl,*.sql.go'
+  changed-files:
+    description: 'Path to changed files'
+    required: false
+    default: ''
+  post-comment:
+    description: 'Whether to post coverage as PR comment'
+    required: false
+    default: 'true'
   trim-package-prefix:
     description: 'Prefix string to trim from the package path in the report'
     required: false
