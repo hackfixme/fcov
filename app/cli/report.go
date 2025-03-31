@@ -1,10 +1,12 @@
 package cli
 
 import (
-	"bufio"
+	"bytes"
 	"encoding"
 	"fmt"
+	"math/rand"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -12,6 +14,7 @@ import (
 	gitignore "github.com/sabhiram/go-gitignore"
 
 	actx "go.hackfix.me/fcov/app/context"
+	aerrors "go.hackfix.me/fcov/app/errors"
 	"go.hackfix.me/fcov/parse"
 	"go.hackfix.me/fcov/report"
 	"go.hackfix.me/fcov/types"
@@ -19,7 +22,8 @@ import (
 
 // Report is the fcov report command.
 type Report struct {
-	Files             []string         `arg:"" help:"One or more coverage files."` // not using 'existingfile' modifier since it makes it difficult to test with an in-memory FS
+	Paths             []string         `arg:"" help:"One or more paths to coverage files or directories."` // not using 'existingfile' modifier since it makes it difficult to test with an in-memory FS
+	Merge             bool             `help:"If true, coverage paths will be calculated as one. Otherwise multiple reports will be generated, one for each path. "`
 	Filter            []string         `help:"Glob patterns applied on file paths to filter files from the coverage calculation and output. \n Example: '*,!*pkg*' would exclude all files except those that contain 'pkg'. " placeholder:"<glob pattern>"`
 	FilterOutput      []string         `help:"Glob patterns applied on file paths to filter files from the output, but *not* from the coverage calculation. " placeholder:"<glob pattern>"`
 	FilterOutputFile  string           `help:"Path to a file that contains newline-separated file paths to include in the output.\nIf specified, it overrides --filter-output. " placeholder:"<path>"`
@@ -100,14 +104,13 @@ func (o *ThresholdsOption) UnmarshalText(text []byte) error {
 // TODO: This currently assumes Go coverage processing. Either correctly infer so,
 // or add a CLI flag to use Go mode reporting.
 func (s *Report) Run(appCtx *actx.Context) error {
-	cov := types.NewCoverage()
 	filterCov := gitignore.CompileIgnoreLines(s.Filter...)
 
 	filterOutLines := s.FilterOutput
 	if s.FilterOutputFile != "" {
 		file, err := appCtx.FS.Open(s.FilterOutputFile)
 		if err != nil {
-			return fmt.Errorf("failed opening filter output file: %w", err)
+			return aerrors.NewRuntimeError("failed opening filter output file", err, "")
 		}
 		defer file.Close()
 
@@ -118,86 +121,118 @@ func (s *Report) Run(appCtx *actx.Context) error {
 
 		filterOutLines, err = createOutputFilterFromFile(file)
 		if err != nil {
-			return fmt.Errorf("failed reading filter output file: %w", err)
+			return aerrors.NewRuntimeError("failed reading filter output file", err, "")
 		}
 	}
 	filterOut := gitignore.CompileIgnoreLines(filterOutLines...)
 
-	for _, fpath := range s.Files {
-		file, err := appCtx.FS.Open(fpath)
+	var covFiles []string
+	for _, path := range s.Paths {
+		info, err := appCtx.FS.Stat(path)
+		if err != nil {
+			if vfs.IsNotExist(err) {
+				return err
+			}
+			return aerrors.NewRuntimeError(fmt.Sprintf("failed getting information on %s", path), err, "")
+		}
+
+		if info.IsDir() {
+			covDirs, err := findCoverageDirectories(appCtx.FS, path)
+			if err != nil {
+				return aerrors.NewRuntimeError(fmt.Sprintf("failed reading directory %s", path), err, "")
+			}
+
+			if len(covDirs) == 0 {
+				appCtx.Logger.Warn(fmt.Sprintf("No coverage directories found in %s", path))
+			}
+
+			genCovFiles, err := generateTextCoverage(covDirs)
+			if err != nil {
+				return err
+			}
+			covFiles = append(covFiles, genCovFiles...)
+		} else {
+			covFiles = append(covFiles, path)
+		}
+	}
+
+	covs := map[string]*types.Coverage{}
+
+	// Random key used to distinguish whether the coverage report should be merged or not.
+	// A hackish way of doing this, but the alternative would require more code.
+	mergeKey := fmt.Sprintf("%x\x00", rand.Int31())
+
+	for _, covFile := range covFiles {
+		file, err := appCtx.FS.Open(covFile)
 		if err != nil {
 			return err
 		}
 		defer file.Close()
 
-		if err = parse.Go(file, cov, filterCov); err != nil {
+		covKey := mergeKey
+		if !s.Merge {
+			covKey = strings.TrimSuffix(filepath.Base(covFile), filepath.Ext(covFile))
+		}
+
+		covs[covKey] = types.NewCoverage()
+		if err := parse.Go(file, covs[covKey], filterCov); err != nil {
 			return err
 		}
 	}
 
-	sum := report.Create(cov)
+	reports := make(map[string]*report.Report, len(covs))
+	for name, cov := range covs {
+		reports[name] = report.Create(cov)
+	}
 
-	renders := make(map[report.Format]string)
+	renders := make(map[string]map[report.Format]string)
 	for _, out := range s.Output {
 		var (
 			render string
 			ok     bool
 		)
-		if render, ok = renders[out.Format]; !ok {
-			render = sum.Render(
-				out.Format, s.NestFiles, filterOut, s.Thresholds.Lower,
-				s.Thresholds.Upper, s.TrimPackagePrefix)
-			renders[out.Format] = render
+		for name, r := range reports {
+			if _, ok = renders[name]; !ok {
+				renders[name] = make(map[report.Format]string)
+			}
+			render = r.Render(
+				out.Format, s.NestFiles, filterOut, s.TrimPackagePrefix,
+			)
+			renders[name][out.Format] = render
+		}
+
+		names := make([]string, 0, len(renders))
+		for n := range renders {
+			names = append(names, n)
+		}
+		sort.Strings(names)
+
+		var output bytes.Buffer
+		for j, name := range names {
+			if name != mergeKey {
+				header := reports[name].RenderHeader(
+					out.Format, name, j > 0, s.Thresholds.Lower, s.Thresholds.Upper,
+				)
+				if _, err := fmt.Fprintln(&output, header); err != nil {
+					return err
+				}
+			}
+			if _, err := fmt.Fprintln(&output, renders[name][out.Format]); err != nil {
+				return err
+			}
 		}
 
 		if out.Filename == "" {
-			if _, err := fmt.Fprintln(appCtx.Stdout, render); err != nil {
+			if _, err := fmt.Fprintln(appCtx.Stdout, output.String()); err != nil {
 				return err
 			}
 			continue
 		}
 
-		if err := vfs.WriteFile(appCtx.FS, out.Filename, []byte(render), 0o644); err != nil {
+		if err := vfs.WriteFile(appCtx.FS, out.Filename, output.Bytes(), 0o644); err != nil {
 			return err
 		}
 	}
 
 	return nil
-}
-
-func createOutputFilterFromFile(file vfs.File) ([]string, error) {
-	scanner := bufio.NewScanner(file)
-	filter := []string{"*"} // exclude everything
-
-	var (
-		line, pkg string
-		packages  = make(map[string]bool)
-		files     []string
-	)
-	// First pass to split the packages being tested from files. Since we can't
-	// reliably determine which .go file is tested, we include the entire package
-	// in that case.
-	for scanner.Scan() {
-		line = scanner.Text()
-		pkg = filepath.Dir(line)
-		if strings.HasSuffix(line, "_test.go") {
-			packages[pkg] = true
-		} else if strings.HasSuffix(line, ".go") {
-			files = append(files, line)
-		}
-	}
-
-	// Second pass to assemble the filter
-	for _, f := range files {
-		pkg = filepath.Dir(f)
-		if !packages[pkg] {
-			filter = append(filter, fmt.Sprintf("!%s", f))
-		}
-	}
-
-	for pkg := range packages {
-		filter = append(filter, fmt.Sprintf("!%s/", pkg))
-	}
-
-	return filter, scanner.Err()
 }

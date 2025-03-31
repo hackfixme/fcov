@@ -25,19 +25,16 @@ const (
 const pkgMarker = '\x00'
 
 // Render the report as a string in the provided format, applying the provided
-// filter, and style adjustments.
-// The lower and upper coverage thresholds are used by formats like Markdown to
-// apply different colors depending on their values. trimPackagePrefix will
-// remove the matching prefix from the absolute file path.
-func (s *Report) Render(
-	ft Format, nestFiles bool, filter *gitignore.GitIgnore,
-	lowerThreshold, upperThreshold float64, trimPackagePrefix string,
+// filter, and style adjustments. trimPackagePrefix will remove the matching
+// prefix from the absolute file path.
+func (r *Report) Render(
+	ft Format, nestFiles bool, filter *gitignore.GitIgnore, trimPackagePrefix string,
 ) string {
-	if len(s.Packages) == 0 {
+	if len(r.Packages) == 0 {
 		return ""
 	}
 
-	sum := s.preRender(filter, nestFiles, trimPackagePrefix)
+	sum := r.preRender(filter, nestFiles, trimPackagePrefix)
 
 	buf := &strings.Builder{}
 	table := tablewriter.NewWriter(buf)
@@ -58,9 +55,6 @@ func (s *Report) Render(
 		table.SetAutoFormatHeaders(false)
 		table.SetBorders(tablewriter.Border{Left: true, Top: false, Right: true, Bottom: false})
 		table.SetCenterSeparator("|")
-
-		buf.Write([]byte(fmt.Sprintf("![Total Coverage](%s)\n\n",
-			generateBadgeURL(s.Coverage*100, lowerThreshold, upperThreshold))))
 
 		if len(sum) == 0 {
 			break
@@ -85,30 +79,56 @@ func (s *Report) Render(
 	table.AppendBulk(data)
 	table.Render()
 
-	if ft == Text {
-		buf.Write([]byte(fmt.Sprintf("\nTotal Coverage: %.2f%%", s.Coverage*100)))
-	}
-
 	out := buf.String()
 	// tablewriter appends an extra newline at the end that I can't seem to
 	// disable, so remove it.
 	out, _ = strings.CutSuffix(out, "\n")
 
+	if ft == Markdown {
+		// Wrap the report in a collapsible element.
+		out = fmt.Sprintf("<details>\n\n%s\n\n</details>", out)
+	}
+
 	return out
+}
+
+func (r *Report) RenderHeader(
+	ft Format, text string, spacer bool, lowerThreshold, upperThreshold float64,
+) string {
+	var s string
+	if spacer {
+		switch ft {
+		case Markdown:
+			s = "\n<hr>\n\n"
+		case Text:
+			s = "\n\n"
+		}
+	}
+
+	tc := renderTotalCoverage(ft, r.Coverage*100, lowerThreshold, upperThreshold)
+
+	switch ft {
+	case Markdown:
+		return fmt.Sprintf("%s### %s %s\n", s, text, tc)
+	case Text:
+		return fmt.Sprintf("%s%s %s\n", s, text, tc)
+	}
+
+	return ""
 }
 
 // preRender sorts and flattens the report, applying any filters, and
 // optionally trimming the file paths as needed.
-func (s *Report) preRender(filter *gitignore.GitIgnore, nestFiles bool, trimPackagePrefix string) [][]string {
-	pkgNames := make([]string, 0, len(s.Packages))
-	for pkgName := range s.Packages {
+func (r *Report) preRender(filter *gitignore.GitIgnore, nestFiles bool, trimPackagePrefix string) [][]string {
+	pkgNames := make([]string, 0, len(r.Packages))
+	for pkgName := range r.Packages {
 		pkgNames = append(pkgNames, pkgName)
 	}
 	sort.Strings(pkgNames)
 
 	sum := make([][]string, 0)
 	for _, pkgName := range pkgNames {
-		pkgSum := s.Packages[pkgName]
+		pkgSum := r.Packages[pkgName]
 
 		fnames := make([]string, 0, len(pkgSum.Files))
 		for fname := range pkgSum.Files {
@@ -220,13 +240,19 @@ func FormatFromString(s string) Format {
 	}
 }
 
-func generateBadgeURL(cov float64, lowerThreshold, upperThreshold float64) string {
-	color := "success"
-	if cov < lowerThreshold {
-		color = "critical"
-	} else if cov < upperThreshold {
-		color = "yellow"
+func renderTotalCoverage(
+	f Format, cov float64, lowerThreshold, upperThreshold float64,
+) string {
+	if f == Markdown {
+		color := "success"
+		if cov < lowerThreshold {
+			color = "critical"
+		} else if cov < upperThreshold {
+			color = "yellow"
+		}
+
+		return fmt.Sprintf("![Total Coverage](https://img.shields.io/badge/%.2f%%25-%s?style=flat)", cov, color)
 	}
 
-	return fmt.Sprintf("https://img.shields.io/badge/Total%%20Coverage-%.2f%%25-%s?style=flat", cov, color)
+	return fmt.Sprintf("%.2f%%", cov)
 }
