@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"bufio"
 	"encoding"
 	"fmt"
 	"path/filepath"
@@ -21,6 +22,7 @@ type Report struct {
 	Files             []string         `arg:"" help:"One or more coverage files."` // not using 'existingfile' modifier since it makes it difficult to test with an in-memory FS
 	Filter            []string         `help:"Glob patterns applied on file paths to filter files from the coverage calculation and output. \n Example: '*,!*pkg*' would exclude all files except those that contain 'pkg'. " placeholder:"<glob pattern>"`
 	FilterOutput      []string         `help:"Glob patterns applied on file paths to filter files from the output, but *not* from the coverage calculation. " placeholder:"<glob pattern>"`
+	FilterOutputFile  string           `help:"Path to a file that contains newline-separated file paths to include in the output.\nIf specified, it overrides --filter-output. " placeholder:"<path>"`
 	NestFiles         bool             `help:"Nest files under packages when rendering to text or Markdown. " default:"true" negatable:""`
 	Output            OutputOption     `short:"o" help:"Write the report to stdout or a file. More than one value can be provided, separated by comma.\nValues can either be formats ('txt' or 'md'), or filenames whose formats will be inferred by their extension.\n Example: 'txt,report.md' would write the report in text format to stdout, and to a report.md file in Markdown format. " default:"txt"`
 	Thresholds        ThresholdsOption `help:"Lower and upper threshold percentages for badge and health indicators. " default:"50,75"`
@@ -95,10 +97,31 @@ func (o *ThresholdsOption) UnmarshalText(text []byte) error {
 }
 
 // Run the fcov report command.
+// TODO: This currently assumes Go coverage processing. Either correctly infer so,
+// or add a CLI flag to use Go mode reporting.
 func (s *Report) Run(appCtx *actx.Context) error {
 	cov := types.NewCoverage()
 	filterCov := gitignore.CompileIgnoreLines(s.Filter...)
-	filterOut := gitignore.CompileIgnoreLines(s.FilterOutput...)
+
+	filterOutLines := s.FilterOutput
+	if s.FilterOutputFile != "" {
+		file, err := appCtx.FS.Open(s.FilterOutputFile)
+		if err != nil {
+			return fmt.Errorf("failed opening filter output file: %w", err)
+		}
+		defer file.Close()
+
+		// TODO: Merge with s.FilterOutput instead of overriding it?
+		if len(filterOutLines) > 0 {
+			appCtx.Logger.Warn("--filter-output-file overrides --filter-output")
+		}
+
+		filterOutLines, err = createOutputFilterFromFile(file)
+		if err != nil {
+			return fmt.Errorf("failed reading filter output file: %w", err)
+		}
+	}
+	filterOut := gitignore.CompileIgnoreLines(filterOutLines...)
 
 	for _, fpath := range s.Files {
 		file, err := appCtx.FS.Open(fpath)
@@ -134,10 +157,47 @@ func (s *Report) Run(appCtx *actx.Context) error {
 			continue
 		}
 
-		if err := vfs.WriteFile(appCtx.FS, out.Filename, []byte(render), 0644); err != nil {
+		if err := vfs.WriteFile(appCtx.FS, out.Filename, []byte(render), 0o644); err != nil {
 			return err
 		}
 	}
 
 	return nil
+}
+
+func createOutputFilterFromFile(file vfs.File) ([]string, error) {
+	scanner := bufio.NewScanner(file)
+	filter := []string{"*"} // exclude everything
+
+	var (
+		line, pkg string
+		packages  = make(map[string]bool)
+		files     []string
+	)
+	// First pass to split the packages being tested from files. Since we can't
+	// reliably determine which .go file is tested, we include the entire package
+	// in that case.
+	for scanner.Scan() {
+		line = scanner.Text()
+		pkg = filepath.Dir(line)
+		if strings.HasSuffix(line, "_test.go") {
+			packages[pkg] = true
+		} else if strings.HasSuffix(line, ".go") {
+			files = append(files, line)
+		}
+	}
+
+	// Second pass to assemble the filter
+	for _, f := range files {
+		pkg = filepath.Dir(f)
+		if !packages[pkg] {
+			filter = append(filter, fmt.Sprintf("!%s", f))
+		}
+	}
+
+	for pkg := range packages {
+		filter = append(filter, fmt.Sprintf("!%s/", pkg))
+	}
+
+	return filter, scanner.Err()
 }
